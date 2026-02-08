@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>一級建築士 学習ガント</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">FIRST-CLASS ARCHITECT PREP</p>
+          <h1 id="app-title">一級建築士 学習プラン</h1>
+          <p id="header-subtitle" class="subtitle"></p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="card today-card" aria-labelledby="today-title">
+          <div class="card-head">
+            <h2 id="today-title">今日の指令</h2>
+            <span id="today-chip" class="pill">-</span>
+          </div>
+          <p id="today-summary" class="today-summary"></p>
+          <ul id="today-todo-list" class="todo-list"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="week-title">
+          <div class="card-head">
+            <h2 id="week-title">週次フォーカス</h2>
+            <span id="week-status-pill" class="pill">-</span>
+          </div>
+          <div id="week-chips" class="chip-row" role="tablist" aria-label="週を選択"></div>
+          <div id="week-panel" class="week-panel"></div>
+        </section>
+
+        <section class="card" aria-labelledby="gantt-title">
+          <div class="card-head">
+            <h2 id="gantt-title">月次・週次ガント</h2>
+            <span class="pill muted">重点配分</span>
+          </div>
+          <div id="month-accordion" class="month-accordion"></div>
+          <div id="gantt-legend" class="legend"></div>
+          <div id="gantt-track" class="gantt-track"></div>
+        </section>
+
+        <section class="card" aria-labelledby="subject-progress-title">
+          <div class="card-head">
+            <h2 id="subject-progress-title">科目別進捗</h2>
+            <span class="pill muted">任意機能</span>
+          </div>
+          <div id="subject-progress" class="subject-progress"></div>
+        </section>
+
+        <section id="error-card" class="card error hidden" aria-live="polite">
+          <h2>JSON検証エラー</h2>
+          <p id="error-message"></p>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

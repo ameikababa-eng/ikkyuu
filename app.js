@@ -88,6 +88,7 @@ const el = {
   syncPull: document.getElementById("sync-pull"),
   syncStatus: document.getElementById("sync-status"),
   weekPicker: document.getElementById("week-picker"),
+  weekChipsLegacy: document.getElementById("week-chips"),
   weekPanel: document.getElementById("week-panel"),
   weekStatus: document.getElementById("week-status-pill"),
   monthAccordion: document.getElementById("month-accordion"),
@@ -518,6 +519,7 @@ function render() {
 }
 
 function renderToday() {
+  if (!el.todaySwipe) return;
   const weekStart = getMondayStart(state.today);
   const todayWeek = findDefaultWeek(state.data.weeks, state.today);
   const focus = getSubject(todayWeek.focus);
@@ -611,29 +613,12 @@ function renderToday() {
 }
 
 function renderWeekPicker() {
+  if (!el.weekPicker && !el.weekChipsLegacy) return;
   const sortedWeeks = [...state.data.weeks].sort((a, b) => parseDate(a.start) - parseDate(b.start));
   const currentIndex = Math.max(
     0,
     sortedWeeks.findIndex((w) => w.id === state.selectedWeekId)
   );
-
-  const prevDisabled = currentIndex <= 0 ? "disabled" : "";
-  const nextDisabled = currentIndex >= sortedWeeks.length - 1 ? "disabled" : "";
-
-  el.weekPicker.innerHTML = `
-    <button id="week-prev" class="week-nav-btn" type="button" ${prevDisabled}>前週</button>
-    <select id="week-select" class="week-select" aria-label="週選択"></select>
-    <button id="week-next" class="week-nav-btn" type="button" ${nextDisabled}>次週</button>
-  `;
-
-  const select = document.getElementById("week-select");
-  sortedWeeks.forEach((week) => {
-    const option = document.createElement("option");
-    option.value = week.id;
-    option.textContent = `${week.label} (${formatDateRange(week.start, week.end)})`;
-    if (week.id === state.selectedWeekId) option.selected = true;
-    select.appendChild(option);
-  });
 
   const updateWeek = (weekId) => {
     state.selectedWeekId = weekId;
@@ -645,21 +630,52 @@ function renderWeekPicker() {
     renderSubjectProgress();
   };
 
-  select.addEventListener("change", (event) => {
-    updateWeek(event.target.value);
-  });
+  if (el.weekPicker) {
+    const prevDisabled = currentIndex <= 0 ? "disabled" : "";
+    const nextDisabled = currentIndex >= sortedWeeks.length - 1 ? "disabled" : "";
 
-  const prevBtn = document.getElementById("week-prev");
-  const nextBtn = document.getElementById("week-next");
+    el.weekPicker.innerHTML = `
+      <button id="week-prev" class="week-nav-btn" type="button" ${prevDisabled}>前週</button>
+      <select id="week-select" class="week-select" aria-label="週選択"></select>
+      <button id="week-next" class="week-nav-btn" type="button" ${nextDisabled}>次週</button>
+    `;
 
-  prevBtn.addEventListener("click", () => {
-    if (currentIndex <= 0) return;
-    updateWeek(sortedWeeks[currentIndex - 1].id);
-  });
+    const select = document.getElementById("week-select");
+    sortedWeeks.forEach((week) => {
+      const option = document.createElement("option");
+      option.value = week.id;
+      option.textContent = `${week.label} (${formatDateRange(week.start, week.end)})`;
+      if (week.id === state.selectedWeekId) option.selected = true;
+      select.appendChild(option);
+    });
 
-  nextBtn.addEventListener("click", () => {
-    if (currentIndex >= sortedWeeks.length - 1) return;
-    updateWeek(sortedWeeks[currentIndex + 1].id);
+    select.addEventListener("change", (event) => {
+      updateWeek(event.target.value);
+    });
+
+    const prevBtn = document.getElementById("week-prev");
+    const nextBtn = document.getElementById("week-next");
+
+    prevBtn.addEventListener("click", () => {
+      if (currentIndex <= 0) return;
+      updateWeek(sortedWeeks[currentIndex - 1].id);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentIndex >= sortedWeeks.length - 1) return;
+      updateWeek(sortedWeeks[currentIndex + 1].id);
+    });
+    return;
+  }
+
+  el.weekChipsLegacy.innerHTML = "";
+  sortedWeeks.forEach((week) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `chip${week.id === state.selectedWeekId ? " active" : ""}`;
+    button.textContent = week.label;
+    button.addEventListener("click", () => updateWeek(week.id));
+    el.weekChipsLegacy.appendChild(button);
   });
 }
 

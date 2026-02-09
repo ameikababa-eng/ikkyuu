@@ -29,6 +29,14 @@
             <span id="today-chip" class="pill">-</span>
           </div>
           <p id="today-summary" class="today-summary"></p>
+          <div class="today-goal-box">
+            <label for="today-goal-input">今日の目標（自由記載）</label>
+            <textarea id="today-goal-input" rows="2" placeholder="例: 法規の避難（出入口幅・避難距離）で判断順を声に出して説明できる状態にする"></textarea>
+          </div>
+          <div class="today-pack-box">
+            <p class="today-pack-title">持ち物（通勤パック）</p>
+            <ul id="today-pack-list" class="todo-list"></ul>
+          </div>
           <details class="sync-box">
             <summary>端末間同期（任意）</summary>
             <p class="sync-help">スマホ/PCで同じチェック状態を共有します（GitHubトークンが必要）。</p>
@@ -39,7 +47,16 @@
             </div>
             <p id="sync-status" class="sync-status">同期: オフ</p>
           </details>
-          <div id="today-swipe" class="today-swipe" aria-label="今日・明日・明後日の指令"></div>
+          <ul id="today-todo-list" class="todo-list"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="weekly-daily-title">
+          <div class="card-head">
+            <h2 id="weekly-daily-title">今週の日次ToDo（閲覧用）</h2>
+            <span class="pill muted">チェックなし</span>
+          </div>
+          <p class="today-summary">バランス問題集は「全科目ミックス3問前後ずつ」で統一表示しています。</p>
+          <div id="weekly-daily-board" class="weekly-daily-board"></div>
         </section>
 
         <section class="card" aria-labelledby="week-title">

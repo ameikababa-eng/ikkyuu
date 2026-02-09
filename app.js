@@ -1,14 +1,90 @@
 const DATA_URL = "./data/plan.json";
 const TODO_STORAGE_KEY = "architect-today-todo-checks-v1";
+const GOAL_STORAGE_KEY = "architect-daily-goals-v1";
 const SYNC_CONFIG_KEY = "architect-sync-config-v1";
 const SYNC_FILE_PATH = "data/progress.json";
+
+const WEEKLY_DAY_PLANS = [
+  {
+    id: "mon",
+    label: "月",
+    todos: [
+      "構造 / 構造② 不静定構造の基礎 / 総合資格_復習ワーク / 実解 / 実施済み",
+      "法規 / 法規③ 集団規定1（道路） / 総合資格_問題集 / 実解（5分/問）×10問 / 実施済み",
+      "計画 / 計画③ 建築作品・建築家 / 自作カード / 即答＋逆引き / 実施済み"
+    ],
+    belongings: ["法規問題集", "構造復習ワーク（必要時）", "作品カード"]
+  },
+  {
+    id: "tue",
+    label: "火",
+    todos: [
+      "法規 / 法規③④（道路・用途地域・建蔽率/容積率） / 総合資格_問題集 / 判断回転（60〜90秒/問）×10問 / 15分",
+      "法規 / 法規④（避難：出入口幅・避難距離） / 総合資格_問題集 / 判断回転×5問＋1分想起 / 10分",
+      "計画 / 計画③（既習作品） / 自作カード / 特徴→作品名 逆引き×5 / 5分"
+    ],
+    belongings: ["法規問題集", "作品カード"]
+  },
+  {
+    id: "wed",
+    label: "水",
+    todos: [
+      "全科目 / バランス問題集（全科目ミックス3問前後ずつ） / 総合資格_バランス学習問題 / 3問×5科目を可能な範囲で実解 / 15分",
+      "構造 / 構造⑦ 振動・耐震 / 構造メモ / 即答チェック（3EI/h³・12EI/h³・Q=ma・用語） / 5分",
+      "計画 / 計画③（既習作品） / 作品カード / 即答（作品→建築家＋特徴1行）×10 / 5分"
+    ],
+    belongings: ["バランス問題集", "構造メモ（可能なら）", "作品カード"]
+  },
+  {
+    id: "thu",
+    label: "木",
+    todos: [
+      "法規 / 法規③④（用途地域・制度：地区計画/建築協定） / 総合資格_問題集 / 実解（5分/問）×5問 / 25分",
+      "法規 / 法規③（建蔽率/容積率） / 総合資格_問題集 / 判断回転×5問 / 10分"
+    ],
+    belongings: ["法規問題集"]
+  },
+  {
+    id: "fri",
+    label: "金",
+    todos: [
+      "全科目 / バランス問題集（全科目ミックス3問前後ずつ） / 総合資格_バランス学習問題 / 弱かった科目のみ再挑戦 / 15分",
+      "計画 / 計画③（新規作品または既習維持） / 作品カード / 追加5件 or ミックス即答 / 15分"
+    ],
+    belongings: ["バランス問題集", "作品集または作品カード"]
+  },
+  {
+    id: "sat",
+    label: "土",
+    todos: [
+      "法規 / 法規③④（道路・用途地域・建蔽率/容積率・避難・制度） / 総合資格_問題集 / 実解（5分/問）×15〜20問 / 75〜100分",
+      "構造 / 構造②⑦（不静定構造・振動） / 総合資格_該当演習 / 間違えた問題のみ解き直し / 40〜60分",
+      "施工または環境 / 施工①〜⑥または環境①〜⑤ / 総合資格_予習ワーク / 見るだけ / 20分"
+    ],
+    belongings: ["法令集", "法規問題集", "構造教材", "施工または環境の冊子"]
+  },
+  {
+    id: "sun",
+    label: "日",
+    todos: [
+      "法規 / 法規③④（間違えた論点） / 法規メモ＋法令集 / 判断順を声に出す＋必要条文確認 / 45〜60分",
+      "計画 / 計画③（既習15件ミックス） / 作品カード / 即答＋逆引き / 20分",
+      "全科目 / バランス問題集（全科目ミックス3問前後ずつ） / 総合資格_バランス学習問題 / 弱点科目のみ実解 / 10〜15分",
+      "運用 / 次週準備 / 学習ログ / 今週の未完了確認＋持ち物セット / 10分"
+    ],
+    belongings: ["法令集", "法規メモ", "作品カード", "バランス問題集"]
+  }
+];
 
 const el = {
   title: document.getElementById("app-title"),
   subtitle: document.getElementById("header-subtitle"),
   todayChip: document.getElementById("today-chip"),
   todaySummary: document.getElementById("today-summary"),
-  todaySwipe: document.getElementById("today-swipe"),
+  todayTodoList: document.getElementById("today-todo-list"),
+  todayPackList: document.getElementById("today-pack-list"),
+  todayGoalInput: document.getElementById("today-goal-input"),
+  weeklyDailyBoard: document.getElementById("weekly-daily-board"),
   syncToken: document.getElementById("sync-token"),
   syncEnable: document.getElementById("sync-enable"),
   syncPull: document.getElementById("sync-pull"),
@@ -29,6 +105,7 @@ let state = {
   selectedWeekId: null,
   today: new Date(),
   todoChecks: {},
+  dailyGoals: {},
   sync: {
     owner: "ameikababa-eng",
     repo: "ikkyuu",
@@ -49,6 +126,7 @@ async function init() {
 
     state.data = data;
     state.todoChecks = loadTodoChecks();
+    state.dailyGoals = loadDailyGoals();
     state.sync = loadSyncConfig();
     bindSyncControls();
     state.selectedWeekId = findDefaultWeek(data.weeks, state.today).id;
@@ -93,6 +171,18 @@ function loadTodoChecks() {
 
 function saveTodoChecks() {
   localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(state.todoChecks));
+}
+
+function loadDailyGoals() {
+  try {
+    return JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveDailyGoals() {
+  localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(state.dailyGoals));
 }
 
 function loadSyncConfig() {
@@ -313,12 +403,24 @@ function addDays(baseDate, offset) {
   return d;
 }
 
-function getDateLabel(date, offset) {
-  if (offset === 0) return "今日";
-  if (offset === 1) return "明日";
-  if (offset === 2) return "明後日";
+function formatDateWithWeekday(date) {
   const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-  return `${date.getMonth() + 1}/${date.getDate()} (${weekdays[date.getDay()]})`;
+  return `${date.getMonth() + 1}/${date.getDate()}（${weekdays[date.getDay()]}）`;
+}
+
+function getMondayStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getDayPlan(date) {
+  const day = date.getDay();
+  const mondayBased = day === 0 ? 6 : day - 1;
+  return WEEKLY_DAY_PLANS[mondayBased];
 }
 
 function getSubject(subjectId) {
@@ -359,11 +461,11 @@ function getPlannedUnits(subjectId, limit = 2) {
   return list.slice(0, limit);
 }
 
-function getChecklistKey(date, week, isWeekend) {
-  return `${toDateId(date)}|${week.id}|${isWeekend ? "weekend" : "weekday"}`;
+function getChecklistKey(date, week) {
+  return `${toDateId(date)}|${week.id}|daily`;
 }
 
-function getTodayChecklistBucket(key) {
+function getChecklistBucket(key) {
   if (!state.todoChecks[key]) state.todoChecks[key] = {};
   return state.todoChecks[key];
 }
@@ -401,6 +503,7 @@ function render() {
 
   const selected = getWeekById(state.selectedWeekId);
   renderToday();
+  renderWeeklyDailyBoard();
   renderWeekPanel(selected);
   renderGantt();
   renderSubjectProgress();
@@ -409,74 +512,115 @@ function render() {
 function renderToday() {
   const todayWeek = findDefaultWeek(state.data.weeks, state.today);
   const focus = getSubject(todayWeek.focus);
+  const status = getScheduleStatus(todayWeek, state.today);
+  const dayPlan = getDayPlan(state.today);
+  const tasks = dayPlan.todos;
+
   el.todayChip.textContent = `${focus.name} 重点`;
   el.todayChip.style.background = focus.color;
   el.todayChip.style.color = focus.textColor;
-  el.todaySummary.textContent = "左右にスワイプで 今日・明日・明後日 の指令を確認";
 
-  el.todaySwipe.innerHTML = "";
+  const checklistKey = getChecklistKey(state.today, todayWeek);
+  const checks = getChecklistBucket(checklistKey);
+  const checkedCount = tasks.reduce((sum, _, idx) => sum + (checks[idx] ? 1 : 0), 0);
+  el.todaySummary.textContent =
+    `${formatDateWithWeekday(state.today)} | ${todayWeek.label} | ${status.label} | 完了 ${checkedCount}/${tasks.length}`;
 
-  [0, 1, 2].forEach((offset) => {
-    const targetDate = addDays(state.today, offset);
-    const week = findDefaultWeek(state.data.weeks, targetDate);
-    const lanes = buildLanes(week);
-    const isWeekend = [0, 6].includes(targetDate.getDay());
-    const tasks = isWeekend ? lanes.practiceLane : lanes.previewLane;
-    const checklistKey = getChecklistKey(targetDate, week, isWeekend);
-    const checks = getTodayChecklistBucket(checklistKey);
-    const checkedCount = tasks.reduce((sum, _, idx) => sum + (checks[idx] ? 1 : 0), 0);
-    const status = getScheduleStatus(week, targetDate);
-    const dayType = isWeekend ? "休日演習" : "平日通勤";
-    const dayLabel = getDateLabel(targetDate, offset);
+  const goalKey = toDateId(state.today);
+  if (el.todayGoalInput) {
+    el.todayGoalInput.value = state.dailyGoals[goalKey] || "";
+    el.todayGoalInput.oninput = (event) => {
+      state.dailyGoals[goalKey] = event.target.value;
+      saveDailyGoals();
+    };
+  }
 
-    const card = document.createElement("article");
-    card.className = "today-slide-card";
-    card.innerHTML = `
-      <div class="today-slide-head">
-        <p class="today-day-label">${dayLabel}</p>
-        <span class="pill muted">${checkedCount}/${tasks.length}</span>
-      </div>
-      <p class="today-day-meta">${dayType} | ${week.label} | ${status.label}</p>
-    `;
+  el.todayPackList.innerHTML = "";
+  dayPlan.belongings.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    el.todayPackList.appendChild(li);
+  });
 
-    const list = document.createElement("ul");
-    list.className = "todo-list today-swipe-list";
+  el.todayTodoList.innerHTML = "";
+  tasks.forEach((task, idx) => {
+    const li = document.createElement("li");
+    li.className = "todo-item";
 
-    tasks.forEach((task, idx) => {
-      const li = document.createElement("li");
-      li.className = "todo-item";
+    const label = document.createElement("label");
+    label.className = "todo-checkbox";
 
-      const label = document.createElement("label");
-      label.className = "todo-checkbox";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = Boolean(checks[idx]);
+    input.setAttribute("aria-label", `今日のToDo ${idx + 1}`);
 
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = Boolean(checks[idx]);
-      input.setAttribute("aria-label", `${dayLabel} ToDo ${idx + 1}`);
+    const text = document.createElement("span");
+    text.className = "todo-text";
+    text.textContent = task;
+    if (input.checked) text.classList.add("done");
 
-      const text = document.createElement("span");
-      text.className = "todo-text";
-      text.textContent = task;
-      if (input.checked) text.classList.add("done");
-
-      input.addEventListener("change", (event) => {
-        checks[idx] = Boolean(event.target.checked);
-        saveTodoChecks();
-        scheduleSyncPush();
-        text.classList.toggle("done", Boolean(event.target.checked));
-        const doneNow = tasks.reduce((sum, _, i) => sum + (checks[i] ? 1 : 0), 0);
-        const badge = card.querySelector(".pill");
-        if (badge) badge.textContent = `${doneNow}/${tasks.length}`;
-      });
-
-      label.append(input, text);
-      li.appendChild(label);
-      list.appendChild(li);
+    input.addEventListener("change", (event) => {
+      checks[idx] = Boolean(event.target.checked);
+      saveTodoChecks();
+      scheduleSyncPush();
+      text.classList.toggle("done", Boolean(event.target.checked));
+      const doneNow = tasks.reduce((sum, _, i) => sum + (checks[i] ? 1 : 0), 0);
+      el.todaySummary.textContent =
+        `${formatDateWithWeekday(state.today)} | ${todayWeek.label} | ${status.label} | 完了 ${doneNow}/${tasks.length}`;
     });
 
-    card.appendChild(list);
-    el.todaySwipe.appendChild(card);
+    label.append(input, text);
+    li.appendChild(label);
+    el.todayTodoList.appendChild(li);
   });
+}
+
+function renderWeeklyDailyBoard() {
+  const weekStart = getMondayStart(state.today);
+  el.weeklyDailyBoard.innerHTML = "";
+
+  for (let i = 0; i < 7; i += 1) {
+    const targetDate = addDays(weekStart, i);
+    const dayPlan = WEEKLY_DAY_PLANS[i];
+
+    const card = document.createElement("details");
+    card.className = "weekly-day-card";
+    card.open = i <= 1;
+    if (toDateId(targetDate) === toDateId(state.today)) {
+      card.classList.add("is-today");
+    }
+
+    const summary = document.createElement("summary");
+    summary.textContent = `${dayPlan.label} | ${formatDateWithWeekday(targetDate)}`;
+
+    const todoTitle = document.createElement("p");
+    todoTitle.className = "weekly-day-title";
+    todoTitle.textContent = "ToDo（閲覧用）";
+
+    const todoList = document.createElement("ul");
+    todoList.className = "todo-list";
+    dayPlan.todos.forEach((todo) => {
+      const li = document.createElement("li");
+      li.textContent = todo;
+      todoList.appendChild(li);
+    });
+
+    const packTitle = document.createElement("p");
+    packTitle.className = "weekly-day-title";
+    packTitle.textContent = "持ち物";
+
+    const packList = document.createElement("ul");
+    packList.className = "todo-list";
+    dayPlan.belongings.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      packList.appendChild(li);
+    });
+
+    card.append(summary, todoTitle, todoList, packTitle, packList);
+    el.weeklyDailyBoard.appendChild(card);
+  }
 }
 
 function renderWeekChips() {

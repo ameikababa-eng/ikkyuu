@@ -116,6 +116,39 @@ h2 {
   line-height: 1.45;
 }
 
+.today-goal-box {
+  margin: 8px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.today-goal-box label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3d4863;
+}
+
+.today-goal-box textarea {
+  width: 100%;
+  border: 1px solid #dce5f2;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+  resize: vertical;
+  min-height: 58px;
+}
+
+.today-pack-box {
+  margin: 6px 0 8px;
+}
+
+.today-pack-title {
+  margin: 0 0 5px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3d4863;
+}
+
 .sync-box {
   margin: 0 0 10px;
   border: 1px solid #edf2f8;
@@ -221,6 +254,36 @@ h2 {
 .today-swipe-list {
   padding-left: 0;
   gap: 7px;
+}
+
+.weekly-daily-board {
+  display: grid;
+  gap: 8px;
+}
+
+.weekly-day-card {
+  border: 1px solid #e8edf5;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fcfdff;
+}
+
+.weekly-day-card summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.weekly-day-card.is-today {
+  border-color: #f2d98f;
+  background: #fffdf2;
+}
+
+.weekly-day-title {
+  margin: 8px 0 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #526180;
 }
 
 .todo-item {
@@ -548,6 +611,10 @@ h2 {
 
   .today-day-meta {
     font-size: 0.78rem;
+  }
+
+  .today-goal-box textarea {
+    font-size: 0.82rem;
   }
 
   .sync-row input,

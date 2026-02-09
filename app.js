@@ -36,9 +36,29 @@ async function init() {
     state.todoChecks = loadTodoChecks();
     state.selectedWeekId = findDefaultWeek(data.weeks, state.today).id;
     render();
+    startDayWatcher();
   } catch (error) {
     showError(error.message);
   }
+}
+
+function startDayWatcher() {
+  setInterval(syncTodayDate, 60 * 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") syncTodayDate();
+  });
+}
+
+function syncTodayDate() {
+  const prevDate = toDateId(state.today);
+  const now = new Date();
+  const nowDate = toDateId(now);
+  if (prevDate === nowDate) return;
+
+  state.today = now;
+  const defaultWeek = findDefaultWeek(state.data.weeks, now);
+  state.selectedWeekId = defaultWeek.id;
+  render();
 }
 
 function loadTodoChecks() {
@@ -256,6 +276,7 @@ function renderWeekPanel(week) {
   const focus = getSubject(week.focus);
   const status = getScheduleStatus(week);
   const lanes = buildLanes(week);
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
 
   el.weekStatus.className = `pill ${statusClass(status.code)}`;
   el.weekStatus.textContent = `${status.label}`;
@@ -280,12 +301,12 @@ function renderWeekPanel(week) {
       <ul class="todo-list">${focusUnitList || "<li>この週の重点単元を設定してください。</li>"}</ul>
     </details>
 
-    <details open>
+    <details ${isMobile ? "" : "open"}>
       <summary>予習レーン（平日・通勤）</summary>
       <ul class="todo-list">${previewList}</ul>
     </details>
 
-    <details open>
+    <details ${isMobile ? "" : "open"}>
       <summary>演習レーン（休日・2〜3h）</summary>
       <ul class="todo-list">${practiceList}</ul>
     </details>

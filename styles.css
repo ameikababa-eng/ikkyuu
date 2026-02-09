@@ -407,6 +407,73 @@ h2 {
   .week-label {
     font-size: 0.72rem;
   }
+
+  .lane {
+    height: 20px;
+  }
+
+  .bar-item {
+    top: 2px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    padding: 10px 8px 20px;
+  }
+
+  .layout {
+    gap: 10px;
+  }
+
+  .card {
+    border-radius: 14px;
+    padding: 11px;
+  }
+
+  .today-summary {
+    font-size: 0.86rem;
+  }
+
+  .todo-checkbox {
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 10px 10px;
+  }
+
+  .todo-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+  }
+
+  .chip-row {
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .chip {
+    font-size: 0.72rem;
+    padding: 6px 9px;
+  }
+
+  .focus-chip {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+  }
+
+  .state-text {
+    font-size: 0.84rem;
+    margin: 6px 0 8px;
+  }
+
+  .week-panel details {
+    padding: 7px 8px;
+  }
+
+  .week-panel summary {
+    font-size: 0.81rem;
+  }
 }
 
 @media (max-width: 420px) {
@@ -434,5 +501,15 @@ h2 {
 
   .todo-text {
     font-size: 0.86rem;
+  }
+
+  .legend-item {
+    font-size: 0.7rem;
+    padding: 3px 7px;
+  }
+
+  .pill {
+    font-size: 0.7rem;
+    padding: 3px 8px;
   }
 }

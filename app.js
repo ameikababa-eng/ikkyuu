@@ -83,12 +83,11 @@ const el = {
   todaySummary: document.getElementById("today-summary"),
   todaySwipe: document.getElementById("today-swipe"),
   todayGoalInput: document.getElementById("today-goal-input"),
-  weeklyDailyBoard: document.getElementById("weekly-daily-board"),
   syncToken: document.getElementById("sync-token"),
   syncEnable: document.getElementById("sync-enable"),
   syncPull: document.getElementById("sync-pull"),
   syncStatus: document.getElementById("sync-status"),
-  weekChips: document.getElementById("week-chips"),
+  weekPicker: document.getElementById("week-picker"),
   weekPanel: document.getElementById("week-panel"),
   weekStatus: document.getElementById("week-status-pill"),
   monthAccordion: document.getElementById("month-accordion"),
@@ -509,11 +508,10 @@ function render() {
 
   renderMonthAccordion();
   renderLegend();
-  renderWeekChips();
+  renderWeekPicker();
 
   const selected = getWeekById(state.selectedWeekId);
   renderToday();
-  renderWeeklyDailyBoard();
   renderWeekPanel(selected);
   renderGantt();
   renderSubjectProgress();
@@ -612,71 +610,56 @@ function renderToday() {
   }
 }
 
-function renderWeeklyDailyBoard() {
-  const weekStart = getMondayStart(state.today);
-  el.weeklyDailyBoard.innerHTML = "";
+function renderWeekPicker() {
+  const sortedWeeks = [...state.data.weeks].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+  const currentIndex = Math.max(
+    0,
+    sortedWeeks.findIndex((w) => w.id === state.selectedWeekId)
+  );
 
-  for (let i = 0; i < 7; i += 1) {
-    const targetDate = addDays(weekStart, i);
-    const dayPlan = WEEKLY_DAY_PLANS[i];
+  const prevDisabled = currentIndex <= 0 ? "disabled" : "";
+  const nextDisabled = currentIndex >= sortedWeeks.length - 1 ? "disabled" : "";
 
-    const card = document.createElement("details");
-    card.className = "weekly-day-card";
-    card.open = i <= 1;
-    if (toDateId(targetDate) === toDateId(state.today)) {
-      card.classList.add("is-today");
-    }
+  el.weekPicker.innerHTML = `
+    <button id="week-prev" class="week-nav-btn" type="button" ${prevDisabled}>前週</button>
+    <select id="week-select" class="week-select" aria-label="週選択"></select>
+    <button id="week-next" class="week-nav-btn" type="button" ${nextDisabled}>次週</button>
+  `;
 
-    const summary = document.createElement("summary");
-    summary.textContent = `${dayPlan.label} | ${formatDateWithWeekday(targetDate)}`;
+  const select = document.getElementById("week-select");
+  sortedWeeks.forEach((week) => {
+    const option = document.createElement("option");
+    option.value = week.id;
+    option.textContent = `${week.label} (${formatDateRange(week.start, week.end)})`;
+    if (week.id === state.selectedWeekId) option.selected = true;
+    select.appendChild(option);
+  });
 
-    const todoTitle = document.createElement("p");
-    todoTitle.className = "weekly-day-title";
-    todoTitle.textContent = "ToDo（閲覧用）";
+  const updateWeek = (weekId) => {
+    state.selectedWeekId = weekId;
+    const selected = getWeekById(weekId);
+    renderWeekPicker();
+    renderToday();
+    renderWeekPanel(selected);
+    renderGantt();
+    renderSubjectProgress();
+  };
 
-    const todoList = document.createElement("ul");
-    todoList.className = "todo-list";
-    dayPlan.todos.forEach((todo) => {
-      const li = document.createElement("li");
-      li.textContent = todo;
-      todoList.appendChild(li);
-    });
+  select.addEventListener("change", (event) => {
+    updateWeek(event.target.value);
+  });
 
-    const packTitle = document.createElement("p");
-    packTitle.className = "weekly-day-title";
-    packTitle.textContent = "持ち物";
+  const prevBtn = document.getElementById("week-prev");
+  const nextBtn = document.getElementById("week-next");
 
-    const packList = document.createElement("ul");
-    packList.className = "todo-list";
-    dayPlan.belongings.forEach((item) => {
-      const li = document.createElement("li");
-      li.textContent = item;
-      packList.appendChild(li);
-    });
+  prevBtn.addEventListener("click", () => {
+    if (currentIndex <= 0) return;
+    updateWeek(sortedWeeks[currentIndex - 1].id);
+  });
 
-    card.append(summary, todoTitle, todoList, packTitle, packList);
-    el.weeklyDailyBoard.appendChild(card);
-  }
-}
-
-function renderWeekChips() {
-  el.weekChips.innerHTML = "";
-
-  state.data.weeks.forEach((week) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `chip${week.id === state.selectedWeekId ? " active" : ""}`;
-    button.textContent = week.label;
-    button.addEventListener("click", () => {
-      state.selectedWeekId = week.id;
-      const selected = getWeekById(week.id);
-      renderWeekChips();
-      renderToday();
-      renderWeekPanel(selected);
-      renderGantt();
-      renderSubjectProgress();
-    });
-    el.weekChips.appendChild(button);
+  nextBtn.addEventListener("click", () => {
+    if (currentIndex >= sortedWeeks.length - 1) return;
+    updateWeek(sortedWeeks[currentIndex + 1].id);
   });
 }
 
@@ -700,8 +683,8 @@ function renderWeekPanel(week) {
       <span class="focus-chip" style="background:${focus.color};color:${focus.textColor}">重点: ${focus.name}</span>
       ${support.map((s) => `<span class="focus-chip" style="background:#f3f6fb;color:#46506a">維持: ${s}</span>`).join("")}
       <span class="focus-chip" style="background:#fff6d5;color:#665100">${week.phase || ""}</span>
+      <span class="focus-chip" style="background:#eef3fa;color:#44506a">${formatDateRange(week.start, week.end)}</span>
     </div>
-    <p class="state-text">期間: ${formatDateRange(week.start, week.end)}</p>
     <p class="state-text">回転ルール: ${state.data.rules.lawTimeLimit}</p>
 
     <details open>
@@ -789,7 +772,7 @@ function renderGantt() {
     bar.addEventListener("click", () => {
       state.selectedWeekId = week.id;
       const selected = getWeekById(week.id);
-      renderWeekChips();
+      renderWeekPicker();
       renderToday();
       renderWeekPanel(selected);
       renderGantt();

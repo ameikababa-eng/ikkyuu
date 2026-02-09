@@ -29,6 +29,16 @@
             <span id="today-chip" class="pill">-</span>
           </div>
           <p id="today-summary" class="today-summary"></p>
+          <details class="sync-box">
+            <summary>端末間同期（任意）</summary>
+            <p class="sync-help">スマホ/PCで同じチェック状態を共有します（GitHubトークンが必要）。</p>
+            <div class="sync-row">
+              <input id="sync-token" type="password" placeholder="GitHub PAT (repo権限)" autocomplete="off" />
+              <button id="sync-enable" type="button">同期を有効化</button>
+              <button id="sync-pull" type="button">最新を取得</button>
+            </div>
+            <p id="sync-status" class="sync-status">同期: オフ</p>
+          </details>
           <div id="today-swipe" class="today-swipe" aria-label="今日・明日・明後日の指令"></div>
         </section>
 

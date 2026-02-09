@@ -116,6 +116,54 @@ h2 {
   line-height: 1.45;
 }
 
+.sync-box {
+  margin: 0 0 10px;
+  border: 1px solid #edf2f8;
+  border-radius: 10px;
+  padding: 8px 9px;
+  background: #fcfdff;
+}
+
+.sync-box summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3d4863;
+}
+
+.sync-help {
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.sync-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+
+.sync-row input,
+.sync-row button {
+  min-height: 36px;
+  border-radius: 9px;
+  border: 1px solid #dce5f2;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+}
+
+.sync-row button {
+  background: #f4f8ff;
+  color: #2c3a58;
+  font-weight: 700;
+}
+
+.sync-status {
+  margin: 8px 0 0;
+  color: #546178;
+  font-size: 0.77rem;
+}
+
 .todo-list {
   margin: 0;
   padding-left: 1rem;
@@ -500,6 +548,11 @@ h2 {
 
   .today-day-meta {
     font-size: 0.78rem;
+  }
+
+  .sync-row input,
+  .sync-row button {
+    font-size: 0.8rem;
   }
 
   .todo-checkbox {

@@ -1,5 +1,7 @@
 const DATA_URL = "./data/plan.json";
 const TODO_STORAGE_KEY = "architect-today-todo-checks-v1";
+const SYNC_CONFIG_KEY = "architect-sync-config-v1";
+const SYNC_FILE_PATH = "data/progress.json";
 
 const el = {
   title: document.getElementById("app-title"),
@@ -7,6 +9,10 @@ const el = {
   todayChip: document.getElementById("today-chip"),
   todaySummary: document.getElementById("today-summary"),
   todaySwipe: document.getElementById("today-swipe"),
+  syncToken: document.getElementById("sync-token"),
+  syncEnable: document.getElementById("sync-enable"),
+  syncPull: document.getElementById("sync-pull"),
+  syncStatus: document.getElementById("sync-status"),
   weekChips: document.getElementById("week-chips"),
   weekPanel: document.getElementById("week-panel"),
   weekStatus: document.getElementById("week-status-pill"),
@@ -22,7 +28,16 @@ let state = {
   data: null,
   selectedWeekId: null,
   today: new Date(),
-  todoChecks: {}
+  todoChecks: {},
+  sync: {
+    owner: "ameikababa-eng",
+    repo: "ikkyuu",
+    branch: "main",
+    token: "",
+    enabled: false,
+    sha: null,
+    timer: null
+  }
 };
 
 async function init() {
@@ -34,9 +49,16 @@ async function init() {
 
     state.data = data;
     state.todoChecks = loadTodoChecks();
+    state.sync = loadSyncConfig();
+    bindSyncControls();
     state.selectedWeekId = findDefaultWeek(data.weeks, state.today).id;
     render();
     startDayWatcher();
+    if (state.sync.enabled) {
+      await pullFromGitHubSync();
+    } else {
+      setSyncStatus("同期: オフ");
+    }
   } catch (error) {
     showError(error.message);
   }
@@ -71,6 +93,179 @@ function loadTodoChecks() {
 
 function saveTodoChecks() {
   localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(state.todoChecks));
+}
+
+function loadSyncConfig() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY) || "{}");
+    return {
+      owner: raw.owner || "ameikababa-eng",
+      repo: raw.repo || "ikkyuu",
+      branch: raw.branch || "main",
+      token: raw.token || "",
+      enabled: Boolean(raw.enabled && raw.token),
+      sha: null,
+      timer: null
+    };
+  } catch {
+    return {
+      owner: "ameikababa-eng",
+      repo: "ikkyuu",
+      branch: "main",
+      token: "",
+      enabled: false,
+      sha: null,
+      timer: null
+    };
+  }
+}
+
+function saveSyncConfig() {
+  localStorage.setItem(
+    SYNC_CONFIG_KEY,
+    JSON.stringify({
+      owner: state.sync.owner,
+      repo: state.sync.repo,
+      branch: state.sync.branch,
+      token: state.sync.token,
+      enabled: state.sync.enabled
+    })
+  );
+}
+
+function setSyncStatus(text) {
+  if (el.syncStatus) el.syncStatus.textContent = text;
+}
+
+function bindSyncControls() {
+  if (!el.syncEnable || !el.syncPull || !el.syncToken) return;
+
+  el.syncToken.value = state.sync.token;
+
+  el.syncEnable.addEventListener("click", async () => {
+    const token = (el.syncToken.value || "").trim();
+    if (!token) {
+      setSyncStatus("同期: トークンを入力してください");
+      return;
+    }
+    state.sync.token = token;
+    state.sync.enabled = true;
+    saveSyncConfig();
+    setSyncStatus("同期: 接続中...");
+    await pullFromGitHubSync();
+    await pushToGitHubSync("sync: initialize shared progress");
+  });
+
+  el.syncPull.addEventListener("click", async () => {
+    if (!state.sync.enabled) {
+      setSyncStatus("同期: 先に同期を有効化してください");
+      return;
+    }
+    setSyncStatus("同期: 最新を取得中...");
+    await pullFromGitHubSync();
+  });
+}
+
+function getGitHubContentsUrl() {
+  const { owner, repo, branch } = state.sync;
+  return `https://api.github.com/repos/${owner}/${repo}/contents/${SYNC_FILE_PATH}?ref=${encodeURIComponent(branch)}`;
+}
+
+function encodeBase64Json(obj) {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj, null, 2))));
+}
+
+function decodeBase64Json(base64Text) {
+  const text = decodeURIComponent(escape(atob(base64Text.replace(/\n/g, ""))));
+  return JSON.parse(text);
+}
+
+function mergeChecks(remoteChecks, localChecks) {
+  const merged = {};
+  const buckets = new Set([...Object.keys(remoteChecks || {}), ...Object.keys(localChecks || {})]);
+  buckets.forEach((bucket) => {
+    merged[bucket] = {};
+    const remoteBucket = remoteChecks?.[bucket] || {};
+    const localBucket = localChecks?.[bucket] || {};
+    const taskIndexes = new Set([...Object.keys(remoteBucket), ...Object.keys(localBucket)]);
+    taskIndexes.forEach((idx) => {
+      merged[bucket][idx] = Boolean(remoteBucket[idx] || localBucket[idx]);
+    });
+  });
+  return merged;
+}
+
+async function pullFromGitHubSync() {
+  if (!state.sync.enabled || !state.sync.token) return;
+  try {
+    const res = await fetch(getGitHubContentsUrl(), {
+      headers: {
+        Authorization: `Bearer ${state.sync.token}`,
+        Accept: "application/vnd.github+json"
+      }
+    });
+
+    if (res.status === 404) {
+      state.sync.sha = null;
+      setSyncStatus("同期: 共有ファイル未作成（初回保存で作成）");
+      return;
+    }
+
+    if (!res.ok) throw new Error(`取得失敗 (${res.status})`);
+
+    const payload = await res.json();
+    state.sync.sha = payload.sha || null;
+    const remoteChecks = decodeBase64Json(payload.content || "e30=");
+    state.todoChecks = mergeChecks(remoteChecks, state.todoChecks);
+    saveTodoChecks();
+    renderToday();
+    setSyncStatus("同期: 最新データ取得済み");
+  } catch (error) {
+    setSyncStatus(`同期エラー: ${error.message}`);
+  }
+}
+
+function scheduleSyncPush() {
+  if (!state.sync.enabled) return;
+  if (state.sync.timer) clearTimeout(state.sync.timer);
+  state.sync.timer = setTimeout(() => {
+    pushToGitHubSync("sync: update todo progress");
+  }, 1200);
+}
+
+async function pushToGitHubSync(message) {
+  if (!state.sync.enabled || !state.sync.token) return;
+  try {
+    const body = {
+      message,
+      branch: state.sync.branch,
+      content: encodeBase64Json(state.todoChecks)
+    };
+    if (state.sync.sha) body.sha = state.sync.sha;
+
+    const res = await fetch(getGitHubContentsUrl(), {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${state.sync.token}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (res.status === 409) {
+      await pullFromGitHubSync();
+      return pushToGitHubSync(message);
+    }
+
+    if (!res.ok) throw new Error(`保存失敗 (${res.status})`);
+
+    const payload = await res.json();
+    state.sync.sha = payload.content?.sha || state.sync.sha;
+    setSyncStatus("同期: 保存済み");
+  } catch (error) {
+    setSyncStatus(`同期エラー: ${error.message}`);
+  }
 }
 
 function validatePlan(data) {
@@ -267,6 +462,7 @@ function renderToday() {
       input.addEventListener("change", (event) => {
         checks[idx] = Boolean(event.target.checked);
         saveTodoChecks();
+        scheduleSyncPush();
         text.classList.toggle("done", Boolean(event.target.checked));
         const doneNow = tasks.reduce((sum, _, i) => sum + (checks[i] ? 1 : 0), 0);
         const badge = card.querySelector(".pill");

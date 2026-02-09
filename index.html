@@ -33,10 +33,6 @@
             <label for="today-goal-input">今日の目標（自由記載）</label>
             <textarea id="today-goal-input" rows="2" placeholder="例: 法規の避難（出入口幅・避難距離）で判断順を声に出して説明できる状態にする"></textarea>
           </div>
-          <div class="today-pack-box">
-            <p class="today-pack-title">持ち物（通勤パック）</p>
-            <ul id="today-pack-list" class="todo-list"></ul>
-          </div>
           <details class="sync-box">
             <summary>端末間同期（任意）</summary>
             <p class="sync-help">スマホ/PCで同じチェック状態を共有します（GitHubトークンが必要）。</p>
@@ -47,7 +43,7 @@
             </div>
             <p id="sync-status" class="sync-status">同期: オフ</p>
           </details>
-          <ul id="today-todo-list" class="todo-list"></ul>
+          <div id="today-swipe" class="today-swipe" aria-label="今週の指令（月曜から日曜）"></div>
         </section>
 
         <section class="card" aria-labelledby="weekly-daily-title">

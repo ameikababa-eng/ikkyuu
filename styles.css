@@ -232,6 +232,11 @@ h2 {
   scroll-snap-align: start;
 }
 
+.today-slide-card.is-active-day {
+  border-color: #f2d98f;
+  background: #fffdf2;
+}
+
 .today-slide-head {
   display: flex;
   align-items: center;

@@ -81,8 +81,7 @@ const el = {
   subtitle: document.getElementById("header-subtitle"),
   todayChip: document.getElementById("today-chip"),
   todaySummary: document.getElementById("today-summary"),
-  todayTodoList: document.getElementById("today-todo-list"),
-  todayPackList: document.getElementById("today-pack-list"),
+  todaySwipe: document.getElementById("today-swipe"),
   todayGoalInput: document.getElementById("today-goal-input"),
   weeklyDailyBoard: document.getElementById("weekly-daily-board"),
   syncToken: document.getElementById("sync-token"),
@@ -408,6 +407,17 @@ function formatDateWithWeekday(date) {
   return `${date.getMonth() + 1}/${date.getDate()}（${weekdays[date.getDay()]}）`;
 }
 
+function getRelativeLabel(date, base) {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const a = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const b = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  const diff = Math.round((a - b) / dayMs);
+  if (diff === 0) return "今日";
+  if (diff === -1) return "昨日";
+  if (diff === 1) return "明日";
+  return "";
+}
+
 function getMondayStart(date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -510,21 +520,13 @@ function render() {
 }
 
 function renderToday() {
+  const weekStart = getMondayStart(state.today);
   const todayWeek = findDefaultWeek(state.data.weeks, state.today);
   const focus = getSubject(todayWeek.focus);
-  const status = getScheduleStatus(todayWeek, state.today);
-  const dayPlan = getDayPlan(state.today);
-  const tasks = dayPlan.todos;
-
   el.todayChip.textContent = `${focus.name} 重点`;
   el.todayChip.style.background = focus.color;
   el.todayChip.style.color = focus.textColor;
-
-  const checklistKey = getChecklistKey(state.today, todayWeek);
-  const checks = getChecklistBucket(checklistKey);
-  const checkedCount = tasks.reduce((sum, _, idx) => sum + (checks[idx] ? 1 : 0), 0);
-  el.todaySummary.textContent =
-    `${formatDateWithWeekday(state.today)} | ${todayWeek.label} | ${status.label} | 完了 ${checkedCount}/${tasks.length}`;
+  el.todaySummary.textContent = "今週（月〜日）を横スワイプ。過ぎた日も週内は残ります。";
 
   const goalKey = toDateId(state.today);
   if (el.todayGoalInput) {
@@ -535,45 +537,79 @@ function renderToday() {
     };
   }
 
-  el.todayPackList.innerHTML = "";
-  dayPlan.belongings.forEach((item) => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    el.todayPackList.appendChild(li);
-  });
+  el.todaySwipe.innerHTML = "";
 
-  el.todayTodoList.innerHTML = "";
-  tasks.forEach((task, idx) => {
-    const li = document.createElement("li");
-    li.className = "todo-item";
+  for (let i = 0; i < 7; i += 1) {
+    const targetDate = addDays(weekStart, i);
+    const week = findDefaultWeek(state.data.weeks, targetDate);
+    const status = getScheduleStatus(week, targetDate);
+    const dayPlan = WEEKLY_DAY_PLANS[i];
+    const tasks = dayPlan.todos;
+    const checks = getChecklistBucket(getChecklistKey(targetDate, week));
+    const checkedCount = tasks.reduce((sum, _, idx) => sum + (checks[idx] ? 1 : 0), 0);
+    const relative = getRelativeLabel(targetDate, state.today);
 
-    const label = document.createElement("label");
-    label.className = "todo-checkbox";
+    const card = document.createElement("article");
+    card.className = "today-slide-card";
+    if (toDateId(targetDate) === toDateId(state.today)) card.classList.add("is-active-day");
+    card.innerHTML = `
+      <div class="today-slide-head">
+        <p class="today-day-label">${dayPlan.label} | ${formatDateWithWeekday(targetDate)} ${relative ? `（${relative}）` : ""}</p>
+        <span class="pill muted">${checkedCount}/${tasks.length}</span>
+      </div>
+      <p class="today-day-meta">${week.label} | ${status.label}</p>
+      <p class="today-pack-title">持ち物（通勤パック）</p>
+    `;
 
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = Boolean(checks[idx]);
-    input.setAttribute("aria-label", `今日のToDo ${idx + 1}`);
-
-    const text = document.createElement("span");
-    text.className = "todo-text";
-    text.textContent = task;
-    if (input.checked) text.classList.add("done");
-
-    input.addEventListener("change", (event) => {
-      checks[idx] = Boolean(event.target.checked);
-      saveTodoChecks();
-      scheduleSyncPush();
-      text.classList.toggle("done", Boolean(event.target.checked));
-      const doneNow = tasks.reduce((sum, _, i) => sum + (checks[i] ? 1 : 0), 0);
-      el.todaySummary.textContent =
-        `${formatDateWithWeekday(state.today)} | ${todayWeek.label} | ${status.label} | 完了 ${doneNow}/${tasks.length}`;
+    const packList = document.createElement("ul");
+    packList.className = "todo-list today-swipe-list";
+    dayPlan.belongings.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      packList.appendChild(li);
     });
 
-    label.append(input, text);
-    li.appendChild(label);
-    el.todayTodoList.appendChild(li);
-  });
+    const todoTitle = document.createElement("p");
+    todoTitle.className = "today-pack-title";
+    todoTitle.textContent = "ToDo（チェック可）";
+
+    const todoList = document.createElement("ul");
+    todoList.className = "todo-list today-swipe-list";
+    tasks.forEach((task, idx) => {
+      const li = document.createElement("li");
+      li.className = "todo-item";
+
+      const label = document.createElement("label");
+      label.className = "todo-checkbox";
+
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = Boolean(checks[idx]);
+      input.setAttribute("aria-label", `${dayPlan.label} ToDo ${idx + 1}`);
+
+      const text = document.createElement("span");
+      text.className = "todo-text";
+      text.textContent = task;
+      if (input.checked) text.classList.add("done");
+
+      input.addEventListener("change", (event) => {
+        checks[idx] = Boolean(event.target.checked);
+        saveTodoChecks();
+        scheduleSyncPush();
+        text.classList.toggle("done", Boolean(event.target.checked));
+        const doneNow = tasks.reduce((sum, _, j) => sum + (checks[j] ? 1 : 0), 0);
+        const badge = card.querySelector(".pill");
+        if (badge) badge.textContent = `${doneNow}/${tasks.length}`;
+      });
+
+      label.append(input, text);
+      li.appendChild(label);
+      todoList.appendChild(li);
+    });
+
+    card.append(packList, todoTitle, todoList);
+    el.todaySwipe.appendChild(card);
+  }
 }
 
 function renderWeeklyDailyBoard() {

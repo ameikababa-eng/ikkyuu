@@ -133,6 +133,48 @@ h2 {
   gap: 8px;
 }
 
+.today-swipe {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.today-slide-card {
+  flex: 0 0 100%;
+  border: 1px solid #edf2f8;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
+  scroll-snap-align: start;
+}
+
+.today-slide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.today-day-label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.today-day-meta {
+  margin: 6px 0 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.today-swipe-list {
+  padding-left: 0;
+  gap: 7px;
+}
+
 .todo-item {
   list-style: none;
 }
@@ -452,6 +494,14 @@ h2 {
     font-size: 0.86rem;
   }
 
+  .today-day-label {
+    font-size: 0.86rem;
+  }
+
+  .today-day-meta {
+    font-size: 0.78rem;
+  }
+
   .todo-checkbox {
     grid-template-columns: 24px minmax(0, 1fr);
     padding: 10px 10px;
@@ -526,6 +576,10 @@ h2 {
 
   .todo-text {
     font-size: 0.86rem;
+  }
+
+  .today-slide-card {
+    padding: 9px;
   }
 
   .legend-item {

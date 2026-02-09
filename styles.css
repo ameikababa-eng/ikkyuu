@@ -457,37 +457,49 @@ h2 {
   gap: 8px;
 }
 
-.week-row {
+.subject-gantt-row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   gap: 8px;
   align-items: center;
 }
 
-.week-label {
-  font-size: 0.75rem;
-  color: #5f6d85;
-  overflow-wrap: anywhere;
+.subject-gantt-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 8px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.lane {
+.subject-gantt-lane {
   position: relative;
-  height: 24px;
-  border-radius: 999px;
+  height: 28px;
+  border-radius: 10px;
   background: #f1f5fa;
   overflow: hidden;
 }
 
-.bar-item {
+.subject-gantt-bar {
   position: absolute;
   top: 3px;
-  height: 18px;
-  border-radius: 999px;
+  height: 22px;
+  border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.bar-item.selected {
+.subject-gantt-bar.selected {
   outline: 2px solid #2a303f;
   outline-offset: 1px;
 }
@@ -544,22 +556,25 @@ h2 {
     padding: 12px;
   }
 
-  .week-row {
-    grid-template-columns: 1fr;
+  .subject-gantt-row {
+    grid-template-columns: 64px minmax(0, 1fr);
     gap: 4px;
   }
 
-  .week-label {
-    font-size: 0.72rem;
+  .subject-gantt-label {
+    font-size: 0.69rem;
+    padding: 4px 6px;
   }
 
-  .lane {
-    height: 20px;
+  .subject-gantt-lane {
+    height: 24px;
   }
 
-  .bar-item {
+  .subject-gantt-bar {
     top: 2px;
-    height: 16px;
+    height: 19px;
+    font-size: 0.62rem;
+    padding: 0 4px;
   }
 }
 
@@ -575,6 +590,16 @@ h2 {
   .card {
     border-radius: 14px;
     padding: 11px;
+  }
+
+  .subject-gantt-row {
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .subject-gantt-label {
+    font-size: 0.65rem;
+    padding: 4px 4px;
   }
 
   .today-summary {

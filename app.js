@@ -751,51 +751,57 @@ function renderLegend() {
 }
 
 function renderGantt() {
-  const weeks = state.data.weeks;
+  const weeks = [...state.data.weeks].sort((a, b) => parseDate(a.start) - parseDate(b.start));
   const minDate = parseDate(weeks[0].start);
   const maxDate = parseDate(weeks[weeks.length - 1].end);
   const totalMs = maxDate - minDate || 1;
 
   el.ganttTrack.innerHTML = "";
 
-  weeks.forEach((week) => {
+  state.data.subjects.forEach((subject) => {
     const row = document.createElement("div");
-    row.className = "week-row";
+    row.className = "subject-gantt-row";
 
     const label = document.createElement("div");
-    label.className = "week-label";
-    label.textContent = week.label;
+    label.className = "subject-gantt-label";
+    label.textContent = subject.name;
+    label.style.background = subject.color;
+    label.style.color = subject.textColor;
 
     const lane = document.createElement("div");
-    lane.className = "lane";
+    lane.className = "subject-gantt-lane";
 
-    const bar = document.createElement("button");
-    bar.type = "button";
-    bar.className = `bar-item${week.id === state.selectedWeekId ? " selected" : ""}`;
+    weeks
+      .filter((week) => week.focus === subject.id)
+      .forEach((week) => {
+        const bar = document.createElement("button");
+        bar.type = "button";
+        bar.className = `subject-gantt-bar${week.id === state.selectedWeekId ? " selected" : ""}`;
 
-    const focus = getSubject(week.focus);
-    bar.style.background = focus.color;
+        const startRatio = clamp((parseDate(week.start) - minDate) / totalMs, 0, 1);
+        const endRatio = clamp((parseDate(week.end) - minDate) / totalMs, 0, 1);
+        bar.style.left = `${startRatio * 100}%`;
+        bar.style.width = `${Math.max((endRatio - startRatio) * 100, 7)}%`;
+        bar.style.background = subject.color;
+        bar.style.color = subject.textColor;
+        bar.textContent = week.label.replace("第", "");
 
-    const startRatio = clamp((parseDate(week.start) - minDate) / totalMs, 0, 1);
-    const endRatio = clamp((parseDate(week.end) - minDate) / totalMs, 0, 1);
+        const status = getScheduleStatus(week);
+        bar.title = `${week.label} | ${subject.name} | ${status.label}`;
 
-    bar.style.left = `${startRatio * 100}%`;
-    bar.style.width = `${Math.max((endRatio - startRatio) * 100, 5)}%`;
+        bar.addEventListener("click", () => {
+          state.selectedWeekId = week.id;
+          const selected = getWeekById(week.id);
+          renderWeekPicker();
+          renderToday();
+          renderWeekPanel(selected);
+          renderGantt();
+          renderSubjectProgress();
+        });
 
-    const status = getScheduleStatus(week);
-    bar.title = `${week.label} | ${focus.name} | ${status.label}`;
+        lane.appendChild(bar);
+      });
 
-    bar.addEventListener("click", () => {
-      state.selectedWeekId = week.id;
-      const selected = getWeekById(week.id);
-      renderWeekPicker();
-      renderToday();
-      renderWeekPanel(selected);
-      renderGantt();
-      renderSubjectProgress();
-    });
-
-    lane.appendChild(bar);
     row.append(label, lane);
     el.ganttTrack.appendChild(row);
   });

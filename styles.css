@@ -28,8 +28,15 @@ body {
     var(--bg);
 }
 
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 .page-shell {
   max-width: 1080px;
+  width: 100%;
   margin: 0 auto;
   padding: 16px 14px 28px;
 }
@@ -75,6 +82,7 @@ h1 {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 h2 {
@@ -113,6 +121,11 @@ h2 {
   padding-left: 1rem;
   display: grid;
   gap: 6px;
+}
+
+.todo-list li {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #today-todo-list {
@@ -220,6 +233,7 @@ h2 {
   margin: 8px 0 10px;
   color: #34405a;
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .metric-list {
@@ -306,6 +320,7 @@ h2 {
   border-radius: 999px;
   font-size: 0.74rem;
   border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow-wrap: anywhere;
 }
 
 .gantt-track {
@@ -323,6 +338,7 @@ h2 {
 .week-label {
   font-size: 0.75rem;
   color: #5f6d85;
+  overflow-wrap: anywhere;
 }
 
 .lane {
@@ -448,13 +464,21 @@ h2 {
   }
 
   .chip-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     margin-top: 8px;
+    overflow-x: visible;
+    scroll-snap-type: none;
+    padding: 4px 0 0;
   }
 
   .chip {
     font-size: 0.72rem;
-    padding: 6px 9px;
+    padding: 7px 8px;
+    white-space: normal;
+    width: 100%;
+    text-align: center;
   }
 
   .focus-chip {
@@ -488,6 +512,7 @@ h2 {
 
   .card-head {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   h2 {

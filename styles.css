@@ -31,6 +31,7 @@ body {
 html,
 body {
   width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
 }
 
@@ -67,6 +68,7 @@ h1 {
 .layout {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .card {
@@ -75,6 +77,8 @@ h1 {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 14px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .card-head {
@@ -136,6 +140,7 @@ h2 {
   font-size: 0.86rem;
   resize: vertical;
   min-height: 58px;
+  max-width: 100%;
 }
 
 .today-pack-box {
@@ -216,6 +221,8 @@ h2 {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 2px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .today-slide-card {
@@ -225,6 +232,8 @@ h2 {
   background: #ffffff;
   padding: 10px;
   scroll-snap-align: start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .today-slide-card.is-active-day {
@@ -251,6 +260,7 @@ h2 {
   margin: 6px 0 8px;
   color: var(--muted);
   font-size: 0.82rem;
+  overflow-wrap: anywhere;
 }
 
 .today-swipe-list {
@@ -271,6 +281,7 @@ h2 {
   border-radius: 10px;
   background: #fbfdff;
   padding: 9px 10px;
+  min-width: 0;
 }
 
 .todo-checkbox input[type="checkbox"] {
@@ -283,6 +294,8 @@ h2 {
 .todo-text {
   line-height: 1.45;
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .todo-text.done {
@@ -296,6 +309,8 @@ h2 {
   border-radius: 12px;
   padding: 12px;
   background: #fcfdff;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .week-picker {
@@ -304,6 +319,7 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .week-nav-btn {
@@ -330,6 +346,8 @@ h2 {
   color: #2c3854;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .week-panel details {
@@ -465,6 +483,7 @@ h2 {
   grid-template-columns: 72px minmax(0, 1fr);
   gap: 8px;
   align-items: center;
+  min-width: 0;
 }
 
 .subject-gantt-label {
@@ -485,6 +504,7 @@ h2 {
   border-radius: 10px;
   background: #f1f5fa;
   overflow: hidden;
+  min-width: 0;
 }
 
 .subject-gantt-bar {
@@ -500,6 +520,7 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .subject-gantt-bar.selected {
@@ -627,6 +648,10 @@ h2 {
     padding: 0 3px;
   }
 
+  .today-slide-card {
+    flex: 0 0 calc(100% - 2px);
+  }
+
   .today-summary {
     font-size: 0.86rem;
   }
@@ -677,6 +702,7 @@ h2 {
     font-size: 0.75rem;
     padding: 8px 8px;
     min-width: 0;
+    max-width: 100%;
   }
 
   .focus-chip {

@@ -615,6 +615,7 @@ function renderToday() {
 function renderWeekPicker() {
   if (!el.weekPicker && !el.weekChipsLegacy) return;
   const sortedWeeks = [...state.data.weeks].sort((a, b) => parseDate(a.start) - parseDate(b.start));
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
   const currentIndex = Math.max(
     0,
     sortedWeeks.findIndex((w) => w.id === state.selectedWeekId)
@@ -644,7 +645,7 @@ function renderWeekPicker() {
     sortedWeeks.forEach((week) => {
       const option = document.createElement("option");
       option.value = week.id;
-      option.textContent = `${week.label} (${formatDateRange(week.start, week.end)})`;
+      option.textContent = isMobile ? week.label : `${week.label} (${formatDateRange(week.start, week.end)})`;
       if (week.id === state.selectedWeekId) option.selected = true;
       select.appendChild(option);
     });

@@ -303,6 +303,7 @@ h2 {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
+  min-width: 0;
 }
 
 .week-nav-btn {
@@ -327,6 +328,8 @@ h2 {
   padding: 7px 10px;
   font-size: 0.8rem;
   color: #2c3854;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .week-panel details {
@@ -580,26 +583,48 @@ h2 {
 
 @media (max-width: 640px) {
   .page-shell {
-    padding: 10px 8px 20px;
+    padding: 8px 6px 18px;
   }
 
   .layout {
-    gap: 10px;
+    gap: 8px;
   }
 
   .card {
     border-radius: 14px;
-    padding: 11px;
+    padding: 10px;
+  }
+
+  .card-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .pill {
+    max-width: 100%;
+    white-space: normal;
   }
 
   .subject-gantt-row {
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: 5px;
+    grid-template-columns: 50px minmax(0, 1fr);
+    gap: 4px;
   }
 
   .subject-gantt-label {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     padding: 4px 4px;
+  }
+
+  .subject-gantt-lane {
+    height: 22px;
+  }
+
+  .subject-gantt-bar {
+    height: 17px;
+    top: 2px;
+    font-size: 0.58rem;
+    padding: 0 3px;
   }
 
   .today-summary {
@@ -637,17 +662,21 @@ h2 {
   .week-picker {
     grid-template-columns: 1fr 1fr;
     gap: 6px;
+    min-width: 0;
   }
 
   .week-select {
     grid-column: 1 / -1;
     font-size: 0.76rem;
     padding: 8px 9px;
+    width: 100%;
+    max-width: 100%;
   }
 
   .week-nav-btn {
     font-size: 0.75rem;
     padding: 8px 8px;
+    min-width: 0;
   }
 
   .focus-chip {

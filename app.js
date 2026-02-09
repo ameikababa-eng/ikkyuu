@@ -1,4 +1,5 @@
 const DATA_URL = "./data/plan.json";
+const TODO_STORAGE_KEY = "architect-today-todo-checks-v1";
 
 const el = {
   title: document.getElementById("app-title"),
@@ -20,7 +21,8 @@ const el = {
 let state = {
   data: null,
   selectedWeekId: null,
-  today: new Date()
+  today: new Date(),
+  todoChecks: {}
 };
 
 async function init() {
@@ -31,11 +33,24 @@ async function init() {
     validatePlan(data);
 
     state.data = data;
+    state.todoChecks = loadTodoChecks();
     state.selectedWeekId = findDefaultWeek(data.weeks, state.today).id;
     render();
   } catch (error) {
     showError(error.message);
   }
+}
+
+function loadTodoChecks() {
+  try {
+    return JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveTodoChecks() {
+  localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(state.todoChecks));
 }
 
 function validatePlan(data) {
@@ -68,6 +83,13 @@ function formatDateRange(start, end) {
   const s = parseDate(start);
   const e = parseDate(end);
   return `${s.getMonth() + 1}/${s.getDate()} - ${e.getMonth() + 1}/${e.getDate()}`;
+}
+
+function toDateId(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function getSubject(subjectId) {
@@ -106,6 +128,15 @@ function statusClass(code) {
 function getPlannedUnits(subjectId, limit = 2) {
   const list = state.data.unitCatalog?.[subjectId] || [];
   return list.slice(0, limit);
+}
+
+function getTodayChecklistKey(week, isWeekend) {
+  return `${toDateId(state.today)}|${week.id}|${isWeekend ? "weekend" : "weekday"}`;
+}
+
+function getTodayChecklistBucket(key) {
+  if (!state.todoChecks[key]) state.todoChecks[key] = {};
+  return state.todoChecks[key];
 }
 
 function buildLanes(week) {
@@ -151,6 +182,9 @@ function renderToday(week) {
   const lanes = buildLanes(week);
   const isWeekend = [0, 6].includes(state.today.getDay());
   const tasks = isWeekend ? lanes.practiceLane : lanes.previewLane;
+  const checklistKey = getTodayChecklistKey(week, isWeekend);
+  const checks = getTodayChecklistBucket(checklistKey);
+  const checkedCount = tasks.reduce((sum, _, idx) => sum + (checks[idx] ? 1 : 0), 0);
 
   el.todayChip.textContent = `${focus.name} 重点`;
   el.todayChip.style.background = focus.color;
@@ -158,12 +192,41 @@ function renderToday(week) {
 
   const status = getScheduleStatus(week);
   const todayType = isWeekend ? "休日演習" : "平日通勤";
-  el.todaySummary.textContent = `${todayType} | ${week.label} (${formatDateRange(week.start, week.end)}) | ${status.label}`;
+  el.todaySummary.textContent =
+    `${todayType} | ${week.label} (${formatDateRange(week.start, week.end)}) | ${status.label} | ` +
+    `完了 ${checkedCount}/${tasks.length}`;
 
   el.todayTodoList.innerHTML = "";
-  tasks.forEach((task) => {
+  tasks.forEach((task, idx) => {
     const li = document.createElement("li");
-    li.textContent = task;
+    li.className = "todo-item";
+
+    const label = document.createElement("label");
+    label.className = "todo-checkbox";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = Boolean(checks[idx]);
+    input.setAttribute("aria-label", `今日のToDo ${idx + 1}`);
+
+    const text = document.createElement("span");
+    text.className = "todo-text";
+    text.textContent = task;
+    if (input.checked) text.classList.add("done");
+
+    input.addEventListener("change", (event) => {
+      checks[idx] = Boolean(event.target.checked);
+      saveTodoChecks();
+      text.classList.toggle("done", Boolean(event.target.checked));
+
+      const doneNow = tasks.reduce((sum, _, i) => sum + (checks[i] ? 1 : 0), 0);
+      el.todaySummary.textContent =
+        `${todayType} | ${week.label} (${formatDateRange(week.start, week.end)}) | ${status.label} | ` +
+        `完了 ${doneNow}/${tasks.length}`;
+    });
+
+    label.append(input, text);
+    li.appendChild(label);
     el.todayTodoList.appendChild(li);
   });
 }
